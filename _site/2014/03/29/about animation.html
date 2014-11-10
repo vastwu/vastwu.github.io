@@ -1,0 +1,454 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>javascript动画设计简介 --- 动画效果指导思想</title>
+    <link rel="stylesheet" href="/stylesheets/styles.css">
+    <link rel="stylesheet" href="/stylesheets/pygment_trac.css">
+    <script src="/libs/jquery-1.11.1.min.js"></script>
+    <script src="/javascripts/respond.js"></script>
+
+    <script src="/libs/highlight/highlight.pack.js"></script>
+    <link rel="stylesheet" href="/libs/highlight/styles/monokai_sublime.css">
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="stylesheets/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+  </head>
+  <body>
+      <div id="header">
+        <nav>
+          <li class="fork"><a href="https://github.com/vastwu">View On GitHub</a></li>
+        </nav>
+      </div><!-- end header -->
+		
+    <div class="wrapper">
+      <section>
+        <div id="title">
+          <h1>javascript动画设计简介 --- 动画效果指导思想</h1>
+          <p></p>
+          <hr>
+          <span class="credits left">Project maintained by <a href="https://github.com/vastwu">vastwu</a></span>
+          <span class="credits right">29 Mar 2014</span>
+        </div>
+        <div>
+      	<h1 id="javascript-----">javascript动画设计简介 — 动画效果指导思想</h1>
+
+<p>通过连贯的改变dom元素的位置达到视觉上动画效果</p>
+
+<h2 id="section">名词解释</h2>
+<ul>
+  <li>帧</li>
+  <li>帧率</li>
+  <li>进度</li>
+  <li>缓动函数</li>
+</ul>
+
+<h2 id="section-1">大纲</h2>
+<ul>
+  <li>效果
+    <ul>
+      <li>效果实现（属性分解）</li>
+      <li>缓动函数</li>
+    </ul>
+  </li>
+  <li>平滑度
+    <ul>
+      <li>帧率控制</li>
+      <li>变化量控制</li>
+    </ul>
+  </li>
+  <li>动画的控制（暂停，继续，加速，减速，播放到指定进度，跳帧）
+    <ul>
+      <li>动画实现思路（连续，瞬时）</li>
+    </ul>
+  </li>
+  <li>性能问题
+    <ul>
+      <li>重绘</li>
+      <li>脏属性</li>
+    </ul>
+  </li>
+  <li>代码结构
+    <ul>
+      <li>解耦</li>
+      <li>可复用</li>
+    </ul>
+  </li>
+</ul>
+
+<!--more-->
+
+<h2 id="step-1-">STEP 1. 起步</h2>
+<p>先从最简单的动画效果说起，如下代码。</p>
+
+<pre><code class="language-javascript">var play = function(dom, end){
+    var timer = setInterval(function(){
+        var left = parseInt(dom.style.left);    //后文简化为getLeft
+        if(left &gt;= end){
+            clearInterval(timer);           //后文简化为stop
+            return;
+        }
+        dom.style.left = left + 10 + 'px'；//后文简化为setLeft
+    }, 16)；
+}
+//useage
+play($('elem'), 1000);
+</code></pre>
+
+<blockquote>
+  <p>Question-1: 如何缓动，实现非线性变化</p>
+</blockquote>
+
+<h2 id="step-2">STEP 2.匀加速缓动</h2>
+<p>线性变化一般是指匀速运动，缓动是模拟显示物理效果，实现近似摩擦减速或逐步加速的运动过程，</p>
+
+<pre><code class="language-javascript">var play = function(dom, add, end){
+    var change = 10;
+    setInterval(function(){
+        change += add;
+        var left = getLeft();
+        if(left &gt;= end){
+            stop();
+        }
+        setLeft(left + change);
+    }, 16);
+}
+//useage
+play($('elem'), 1, 1000);
+</code></pre>
+
+<blockquote>
+  <p>Question-2:匀加速不能满足需要，为了更好地模拟显示各种物理效果，需要实现变加速、减速效果</p>
+</blockquote>
+
+<h2 id="step-3">STEP 3.缓动函数</h2>
+
+<p>非线性变化的过程需要数学函数的参与来简化代码和提高可控性，引入变化函数的概念</p>
+
+<h5 id="section-2">变化函数</h5>
+<p>简单的缓动函数是由<code>x,y</code>组成的二元表达式，输入<code>x</code>，输出<code>y</code>，表示一种依赖变化关系</p>
+
+<ul>
+  <li>线性变化函数 </li>
+</ul>
+
+<pre><code class="language-javascipt">function (x){
+    return x;
+}
+</code></pre>
+<ul>
+  <li>加速变化函数 </li>
+</ul>
+
+<pre><code class="language-javascipt">function (x){
+    return x * x;
+}
+</code></pre>
+
+<h5 id="section-3">在动画函数中如何应用？</h5>
+
+<p>为了便于控制和人类理解，一般的缓动函数都采取如下策略设计</p>
+
+<ul>
+  <li>当<code>x</code>由 0~1变化时，<code>y</code>的值也从0~1变化， 即 <code>x=0, y=0 &amp;&amp; x=1,y=1</code></li>
+  <li><code>x</code>表示播放进度的百分比，<code>y</code>值表示变化值的百分比，乘以变化总量获得当前变化值</li>
+</ul>
+
+<pre><code class="language-javascript">var leaner = function(x){
+    return x;
+}
+var easeIn = function(x){
+    return x * x;
+}
+var play = function(dom, end, timingFunction){
+    var process = 0;
+    var left = getLeft();
+    var change = end - left;
+    setInterval(function(){
+        process += 0.1;
+        left = left + timingFunction(process) * change;
+        setLeft(left);
+        if(process == 1){
+            stop()
+        }
+    }, 16);
+}
+//useage
+play($('elem'), 1000, leaner);
+</code></pre>
+
+<h3 id="section-4">更复杂的缓动函数</h3>
+
+<p>资料: <a href="http://djt.qq.com/article/view/1249">让界面动画更自然</a></p>
+
+<blockquote>
+  <p>Question-3:什么<code>process</code>只能每次递增<code>0.1</code>，想要控制时间怎么办</p>
+</blockquote>
+
+<h2 id="step-3-1">STEP 3.帧率和时间</h2>
+
+<p>两者需要结合起来一起解决，如果试图通过增加参数来解决问题，随着日后的功能扩展，会逐渐增加更多的参数</p>
+
+<p>另外还有用一个问题，当增加了时间限制，而帧率则与<code>setInterval</code>的频率相关，就同时需要调整<code>del</code>`</p>
+
+<pre><code class="language-javascript">var play = function(dom, end, timingFunction, duration, fps, ...){
+    ...
+}
+//useage
+play($('elem'), 1000, leaner, 3000, 60, ...);
+</code></pre>
+
+<p>另外，如果简单的增加时间参数，则会在调整效果时面对更多的复杂的参数，此处需要吧时间作为唯一考量标准，由此推算出其他参数</p>
+
+<blockquote>
+  <p>程序设计的重要思想，变量归一化，将多个相关的变量，总结整理为尽可能少的输入项，由程序完成推算过程</p>
+</blockquote>
+
+<pre><code class="language-javascript">var play = function(dom, end, timingFunction, duration){
+    var process = 0;
+    var left = getLeft();
+    var change = end - left;
+    var startTime = new Date();
+    
+    setInterval(function(){
+        var pass = new Date() - startTime;
+        process = pass / duratioin;
+        left = left + timingFunction(process) * change;
+        if(process &gt;= 1){
+            stop();
+            left = end;
+        }
+        setLeft(left);
+    }, 16);
+}
+</code></pre>
+
+<p>此处由时间计算进度，控制了总体执行时间，如果出现性能问题，则会表现出跳帧现象，从而总时间不受影响，另外此种情况下可能出现最后一帧超过预定结束值的情况，故在最后时多增加了一次设置位置。</p>
+
+<blockquote>
+  <p>Question-4:我想改<code>top</code>,想做透明度渐变，想做斜线运动</p>
+</blockquote>
+
+<h2 id="step-4">STEP 4.绘制过程解耦</h2>
+
+<p>面对复杂的需求，上面的函数显然已经不够用了，不同的动画效果都要写一个不同的<code>play</code>函数岂不是太麻烦了，此时需要抽取出变化过程（绘制函数），以确保我们的动画函数自身功能单一</p>
+
+<pre><code class="language-javascript">var play = function(timingFunction, duration, renderer){
+    var process = 0;
+    var startTime = new Date();
+    var timer = setInterval(function(){
+        var pass = new Date() - startTime;
+        process = pass / duratioin;
+        process = timingFunction(process);
+        renderer(process);
+        if(process &gt;= 1){
+            stop();
+        }
+    }, 16);
+}
+//usage
+var startValue = getLeft()
+var changeValue = 500 - startValue;
+play(leaner, 3000, function(progress){
+    setLeft(startValue + changeValue * process);
+})
+</code></pre>
+<p>此处的<code>usage</code>部分跟最原始的写法是不是很相近？此处将绘制部分剥离，<code>play</code>只负责计算进度和缓动函数变化，按一定频率调用外部传入的回执函数，这样如何绘制动画就交给了外部使用者来决定，例如我们可以按下面这样使用来进行不同属性，不同变化率的动画
+~~~javascript
+//usage
+play(leaner, 3000, function(progress){
+    setLeft(geValue * process);             //后文统一简化为draw
+    setTop(startValue + changeValue * process);
+})
+play(easeIn, 3000, function(progress){
+    setOpacity(1 * process);
+})
+~~~</p>
+
+<blockquote>
+  <p>Question-5: 说好的暂停，继续，加速，减速，播放到指定进度</p>
+</blockquote>
+
+<h2 id="step-5-">STEP 5. 动画控制对象</h2>
+
+<p>说到控制，其实就是在动画期间进行动态调整参数</p>
+
+<p>动画效果的两大类设计思路</p>
+
+<ul>
+  <li>连续：在<code>step3</code>之前的函数均是连续型，动画的每一帧的绘制依赖于前一个帧的状态</li>
+  <li>瞬时：从<code>step3</code>之后，每一帧的绘制只依赖于进度<code>process</code></li>
+</ul>
+
+<pre><code class="language-javascript">    var Animate = function(fps, timingFunction, duration, draw){
+        var process = 0;
+        var k = 1;
+        var startTime = new Date();
+        var timer = null;
+        
+        this.start = function(){
+            startTime = new Date();
+            timer = setInterval(function(){
+                var pass = new Date() - startTime;
+                process = pass / duratioin;
+                process = timingFunction(process * k);
+                draw(process);
+                if(process &gt;= 1){
+                    clearInterval(timer);
+                }
+            }, 16);
+        }
+        this.changeSpeed = function(t){
+            k = t;
+        }
+        this.pause = function(){
+            
+        }
+        this.stop = function(){
+            process = 1;
+            clearInterval(timer);
+        }
+    }
+</code></pre>
+<blockquote>
+  <p>Question-5:过多的绘制对象产生大量<code>setInterval</code>,导致性能下降,进程阻塞,如何解决</p>
+</blockquote>
+
+<h3 id="step6-">STEP.6 集中重绘</h3>
+<p>#### a.多个对象的绘制过程
+~~~javascript
+    setInterval(function(){
+        render_a();
+    }, 16);
+    setInterval(function(){
+        render_b();
+    }, 16);
+    …
+~~~
+#### b.整合在一次绘制中</p>
+
+<pre><code class="language-javascript">    setInterval(function(){
+        render_a();
+        render_b();
+         ...
+    }, 16);
+</code></pre>
+<p>#### c.支持复数个对象绘制</p>
+
+<pre><code class="language-javascript">    setInterval(function(){
+        items.each(function(index, draw){
+            draw();
+        });
+    }, 16);
+    ...
+</code></pre>
+<p>#### d.场景对象</p>
+
+<pre><code class="language-javascript">var Scene = function(){
+    var items = [];
+    setInterval(function(){
+        items.each(function(index, draw){
+            draw();
+        });
+    }, 16);
+    this.add = function(){...}
+    this.remove = function(){...}
+}
+</code></pre>
+<blockquote>
+  <p>Question-6:不停的重绘对于, dom节点的高频操作会导致严重的性能问题, 如何解决?</p>
+</blockquote>
+
+<h3 id="step7-">STEP.7 脏属性</h3>
+
+<p>每次重绘只处理变化了的属性,对于不变的属性略过(js的逻辑判断相比于dom节点属性设置,性能损耗小太多了)</p>
+
+<pre><code class="language-javascript">draw:function(){
+    if(this.top_changed){
+        this.elem.style.top = this.top + 'px';
+    }
+    if(this.left_changed){
+        this.elem.style.left = this.left + 'px';
+    }
+}
+</code></pre>
+
+<h3 id="step8-">STEP.8 结构解耦,可替换的渲染器</h3>
+
+<p>要实现该种逻辑,需要将dom节点与绘制元素对象分离,抽象出<code>数据对象</code>和<code>渲染器对象</code>,除了更好的分离数据和<code>dom</code>节点,更可以方便的替换<code>渲染器对象</code>实现不同的渲染方式</p>
+
+<pre><code class="language-javascript">    //简单的数据对象
+    var CustomImage = function(x, y, src){
+        this.src = src;
+        this.left = x;
+        ...
+    }
+    
+    //Dom型渲染器
+    var DomRender = function(){
+        ...
+        var context = document.createElement('div');
+        this.draw = function(data){
+            var img = new Image();
+            img.src = data.src;
+            if(data.left_changed){
+                 img.style.left = data.x + 'px';
+            }
+            ...
+            context.appendChild(img);
+        }
+    }
+    
+    //Canvas型渲染器
+    var CanvasRender = function(){
+        ...
+        var canvas = document.createElement('canvas');
+        var context = canvas.getContext('2d');
+        this.draw = function(data){
+            if(data.left_changed){
+                context.clearRect();
+                var img = new Image();
+                img.src = data.src;
+                ...
+                context.drawImage(img, x ...);
+            }
+
+        }
+    }
+    
+    //useage
+    var img = new CustomImage(...);
+    var render = new DomRender();   //new CanvasRender();
+    render.draw(img)
+</code></pre>
+
+      	</div>
+      </section>
+
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+    <script>
+    // marked.setOptions({
+    //     renderer: new marked.Renderer(),
+    //     gfm: true,
+    //     tables: true,
+    //     breaks: false,
+    //     pedantic: false,
+    //     sanitize: true,
+    //     smartLists: true,
+    //     smartypants: false,
+    //     highlight:function(code, lang){
+    //         return hljs.highlightAuto(code, lang ? [lang] : undefined).value;
+    //     }
+    // });
+    $('pre > code').each(function(index, code){
+    	code.innerHTML = hljs.highlightAuto(code.textContent, undefined).value;
+    })
+    //response.data.html = marked(response.data.content);
+
+    </script>
+  </body>
+</html>

@@ -1,0 +1,462 @@
+---
+layout: post
+title: 用css3做一个简单的惯性效果
+---
+
+常见的菜单交互中，经常会增加一些拖拽的惯性动作，来使得菜单的操作感更接近现实,下面来看如何使用css3的方式来实现惯性效果
+PS：下文中的部分资料来自网络，其中包括[SlipJs](http://www.slipjs.com/)中的代码给我很大启发（感谢作者），文中有部分引用和修改。
+
+### 基础篇
+
+先搭建一个基本的，可以实现拖拽滚动的列表项,html部分如下，其中加入了一些位置调整和禁止选中的属性，是的列表的在页面中看起来更清晰
+
+~~~html
+<style type="text/css">
+body{
+    padding: 0;
+    margin: 0;
+}
+#view{
+    height:500px;
+    width:400px;
+    border:1px solid red;
+    position: relative;
+    left:100px;
+    top:100px;
+    overflow: hidden;
+}
+#list{
+    margin: 0;
+    -webkit-user-select: none;
+}
+#list li{
+    height:50px;
+    line-height:35px;
+}
+</style>
+<body>
+    <div id="view">
+        <ul id="list"></ul>
+    </div>
+</body>
+
+~~~
+
+js部分代码如下
+~~~js
+    var list = document.getElementById('list');
+    var h = [];
+    var temp = new Array(5);
+    for(var i = 1; i <= 30; i++){
+        h.push("<li>" + temp.join(i) + "</li>");
+    }
+    list.innerHTML = h.join("");
+
+    var isDrag = false;
+    var startY = 0;
+    var offsetY = 0;
+    var listY = 0;
+    list.addEventListener('mousedown', function(e){
+        isDrag = true;
+        startY = e.pageY;
+        offsetY = listY - startY;
+    });
+    document.body.addEventListener('mousemove', function(e){
+        if(!isDrag){
+            return;
+        }  
+        listY = offsetY + e.pageY;      
+        list.style.webkitTransform = 'translateY(' + listY + 'px)';
+    });
+    document.body.addEventListener('mouseup', function(e){
+        isDrag = false;
+    });
+~~~
+前半部分用来插入列表项，模拟生成一批li，后面的部分是一组简单的滚动事件处理，
+* mousemove和mouseup事件务必绑定在body上，因为无论是鼠标拖拽还是改为touch事件，均可能在拖拽过程中移出列表元素，这样就无法响应移动和取消事件
+* mousemove和mouseup事件可以在mousedown时绑定，mouseup时取消，这样可以避免大量的move事件无效触发，这里只是简单示例，真实场景中可以根据需要去调整
+
+这样我们就有了一个最基本的可滚动列表，下面开始加入惯性，惯性必然是在人工拖动结束才开始进行，其中必要收集的数据有人工拖动的时间和距离，这样我们才能计算出速度，以推算惯性的滑动距离和事件，这样引入一个before_drag_y和before_drag_time的变量，在mousedown时保存
+
+~~~js
+    var drag_before_y = 0;
+    var drag_before_time = null;
+    list.addEventListener('mousedown', function(e){
+        isDrag = true;
+        startY = e.pageY;
+        drag_before_y = listY;
+        offsetY = listY - startY;
+        drag_before_time = new Date();
+    });
+~~~
+
+在end部分可以计算得出dist和duration，并将这两个参数交给doInertia来继续操作
+~~~js
+    document.body.addEventListener('mouseup', function(e){
+        isDrag = false;
+        var duration = new Date() - drag_before_time;
+        var dist = listY - drag_before_y;
+        listY = doInertia(dist, duration, listY,list);
+    });
+~~~
+
+在实现doInertia之前，先确认如何使用css3来实现惯性，惯性是一段连续的动画效果，用js来逐步修改transform是没什么问题，我们期望的是一种更简便的方式来完成，那么连续的动画效果有两个方案，-webkit-animation和-webkit-transition，animation更适于实现预设的，固定的动画过程，而惯性效果根据实际的拖拽速度每次可能皆不相同，所以transition会更合适一些，transition所需要的是过渡时间和距离，这些我们可以通过dist和duration来计算得出，所以预先为list增加一项属性 -webkit-transition来指定需要相应的属性
+~~~css
+#list{
+    margin: 0;
+    -webkit-transition-timing-function:cubic-bezier(0.33, 0.66, 0.66, 1);
+    -webkit-transition-property: -webkit-transform;
+    -webkit-user-select: none;
+}
+~~~
+此处默认时间为0ms，后面会提到如何使用该属性
+timing-function是描述过度变化方式的，此处用贝塞尔曲线表示的一段减速过程，关于贝塞尔曲线可以参考下面的资料
+[w3c关于timing-function的描述](http://www.w3.org/TR/css3-transitions/#transition-timing-function_tag)
+[wiki中纯数学角度讲解的贝塞尔曲线](http://zh.wikipedia.org/wiki/%E8%B2%9D%E8%8C%B2%E6%9B%B2%E7%B7%9A)
+
+**如果惯性产生了位移，此处需要根据返回值来更新 listY 属性**
+
+通过一个简单的方式来计算出所需要的惯性属性
+~~~js
+    function momentum(dist, time) {
+        var deceleration = 0.001,
+            speed = Math.abs(dist) / time,
+            newDist = (speed * speed) / (2 * deceleration),
+            newTime = 0;
+        newDist = newDist * (dist < 0 ? -1 : 1);
+        newTime = speed / deceleration;
+        return { 
+            'dist': newDist, 
+            'time': newTime 
+        };
+    };
+~~~
+计算方式来源于匀减速直线运动，deceleration为减速的“加速度”。可以通过调整该参数来改观效果
+
+在doInertia过程中调用momentum获取了正确的惯性滑动距离和时间后，将这两项变量赋值给list的过渡和变形属性，只有当速度在一定程度之上时，才需要应用惯性，这个可以根据业务场景进行调整，这里阈值暂取0.3
+~~~js
+    function doInertia(dist, duration, currectY, elem){
+        var v = dist / duration;
+        if(Math.abs(v) > 0.3){
+            var param = momentum(dist, duration);
+            elem.style.webkitTransitionDuration = param.time + 'ms';
+            elem.style.webkitTransform = 'translateY(' + (currectY + param.dist) + 'px)';
+            return currectY + param.dist;
+        }
+        return currectY;
+    };
+~~~
+好了，到这里基本就完整了最简单的惯性效果，我们的原理就是在最终拖动结束后，应用transition来完整惯性过程，告诉css属性需要多长时间，移动多远和移动方式，这里要想有一个好的效果则需要不断微调各种参数
+
+
+## 进阶篇
+
+我们的列表现在可以滚动了，但是有巨大的缺陷，当你在向上或向下滚动到边界时，会华丽丽的超出边界再也看不到了，特别是引入了惯性后，快速拖拽一下就滑出去了，此时就要为其定义滑动边界，此处要注意的是，transformY为负值，此处定义的max实际是要当做最小值来处理，这个概念一定要明确
+~~~js
+    var scroll_min = 0;
+    var scroll_max = list.clientHeight - view.clientHeight;
+~~~
+
+接下来在move和惯性函数中加入限定
+
+~~~js
+    document.body.addEventListener('mousemove', function(e){
+        if(!isDrag){
+            return;
+        }  
+        listY = drag_before_y - startY + e.pageY;    
+        if(listY > 0){
+            listY = 0;
+        }else if(listY < -scroll_max){
+            listY = -scroll_max;
+        }  
+        list.style.webkitTransform = 'translateY(' + listY + 'px)';
+    });
+
+    function doInertia(dist, duration, currectY, elem){
+        var v = dist / duration;
+        if(Math.abs(v) > 0.3){
+            var param = momentum(dist, duration);
+            elem.style.webkitTransitionDuration = param.time + 'ms';
+            var toY = currectY + param.dist;
+            if(toY > 0){
+                toY = 0;
+            }else if(toY < -scroll_max){
+                toY = -scroll_max;
+            }              
+            elem.style.webkitTransform = 'translateY(' + toY + 'px)';
+            return toY;
+        }
+        return currectY;
+    };
+~~~
+这样基本完工，使用中你会发现还有个问题，就是在滑动过程中是无法阻止滑动的，并且反向拖动时会有一些奇怪的黏黏手感，这是因为css3的过渡效果一定是会执行结束后才停止，而常见的比如iphone中的列表滑动时，是可以通过点击列表来停止的，接下俩就是加上这个效果
+
+~~~js
+    list.addEventListener('mousedown', function(e){
+        var transform = getComputedStyle(list)['webkitTransform']
+        var y = transform.replace(/[^\d-.,]/g, '').split(',')[5];
+        list.style.webkitTransitionDuration = '0ms';
+        list.style.webkitTransform = 'translateY(' + y + 'px)';
+
+        isDrag = true;
+        startY = e.pageY;
+        drag_before_y = listY = y || 0;
+        drag_before_time = new Date();
+
+    });
+~~~
+
+这个只需要在list的mousedown上下手就可以了，做一些改进，使得按下鼠标时可以阻止正在进行的滑动，
+* getComputedStyle可以获取当前准确的元素css属性，即便是滑动过程中，该函数也可以获取过渡进程中的瞬时数值，该函数获取的transform是一个类似`matrix(1, 0, 0, 1, 0, -649.076904296875)`的矩阵表示的变形描述，使用正则处理后，提取其中的变化量，如果业务中该元素有其他的变形，则需要根据场景在进行处理
+* 拿到当前值后，将当前的过渡时间置为0，将当前的y值付给过渡中的transform（此时的transform值为过渡终点值，单纯的将时间置为0会导致过渡直接到达终点）
+
+这下列表就实现了按下鼠标时重置当前状态，并可以立刻执行反向操作
+
+### 高级篇
+
+看着很多ios的菜单都有个回弹功能，我们也可以简单实现一个类似的效果，回弹，即是取消拖拽和惯性的边界，但是需要在滑动到边界之后复位
+
+首先取消mousemove中的边界限定,同时，在ios中，拖拽到边界时，会有拖着有点费劲的感觉，实际是拖拽位移和鼠标位移的比例被改变了，此处我们将其量化，即当拖出边界时，d的值变为正常的一半，即鼠标移动同样的位移，但边界外的菜单移动幅度只有正常的1 / 2,
+
+~~~js
+    document.body.addEventListener('mousemove', function(e){
+        if(!isDrag){
+            return;
+        }  
+        var d = e.pageY - startY;
+        listY = drag_before_y + d;    
+        if(listY > 0){
+            listY = drag_before_y + d / 2;
+        }else if(listY < -scroll_max){
+            listY = drag_before_y + d / 2;    
+        }  
+        list.style.webkitTransform = 'translateY(' + listY + 'px)';
+    });
+~~~
+
+接下来去除惯性的边界限定，这里的去除要注意，为了避免拖拽后的反向惯性，同时也为了手感更稳定，此处加入了duration<200ms才触发惯性动作的限制，为的是减少小幅度惯性移动，只响应足够快的滑动。同时，不在响应离开边界范围的拖拽，越界的拖拽操作会立刻触发回弹（reback），那个reback函数下面会提到
+
+~~~js
+    function doInertia(dist, duration, currectY, elem){
+        var v = dist / duration;
+        if(Math.abs(v) > 0.2 && duration < 200 && currectY < 0 && currectY > -scroll_max){
+            var param = momentum(dist, duration);
+            elem.style.webkitTransitionDuration = param.time + 'ms';
+            var toY = currectY + param.dist;          
+            elem.style.webkitTransform = 'translateY(' + toY + 'px)';
+            return toY;
+        }
+        reback();
+        return currectY;
+    };
+~~~
+
+两个边界限定解除了，就要开始准备实现复位的操作，webkit中针对变形提供了`webkitTransitionEnd`事件，同时为了让复位函数能够被外部调用（比如上面的未触发惯性的时候），独立声明并绑定事件
+
+~~~js
+    function reback(){
+        if(listY > 0){
+            listY = 0;
+        }else if(listY < -scroll_max){
+            listY = -scroll_max;
+        }  
+        list.style.webkitTransitionDuration = '100ms';
+        list.style.webkitTransform = 'translateY(' + listY + 'px)';
+    };
+    list.addEventListener('webkitTransitionEnd', reback);
+~~~
+
+到此基本完工，拖拽可以实现菜单回弹，但还有个小问题，当在边界值附近快速拖拽菜单，会看到菜单内容由于惯性影响飞出好远，好久之后才回来，这个体验可不太好，所以要加入惯性的最大距离限制，改造一下momentum和doInertia，
+
+~~~js
+    function doInertia(dist, duration, currectY, elem){
+        var v = dist / duration;
+        if(Math.abs(v) > 0.2 && duration < 200 && currectY < 0 && currectY > -scroll_max){
+            // < 0 向下滑动，检查下边界, >0 向上滑动，检查上边界
+            var c = dist < 0 ? currectY + scroll_max : -currectY;
+            var maxDist = c + view.clientHeight / 6;
+            var param = momentum(dist, duration, maxDist);
+            elem.style.webkitTransitionDuration = param.time + 'ms';
+            var toY = currectY + param.dist;            
+            elem.style.webkitTransform = 'translateY(' + toY + 'px)';
+            return toY;
+        }
+        reback();
+        return currectY;
+    };
+
+    function momentum(dist, time, maxDist) {
+        var deceleration = 0.001,
+            speed = Math.abs(dist) / time,
+            newDist = (speed * speed) / (2 * deceleration),
+            newTime = 0;
+
+        if (Math.abs(newDist) > maxDist) {
+            newDist = maxDist;
+            speed = speed / 6;
+        }
+        newDist = newDist * (dist < 0 ? -1 : 1);
+        newTime = speed / deceleration;
+        return { 
+            'dist': newDist, 
+            'time': newTime 
+        };
+    };
+~~~
+
+在doInertia中，计算惯性的最大位移距离，惯性的最大位移距离为当前位置到边界的距离+可视区域的1/6，同时momentum中对maxDist的处理为，如果计算出的滑动距离大于提供的最大距离（此时的newDist是带有方向符号的），则采用maxDist，滑动speed速度变为1/6意味着惯性滚动的速度会更快，即对于超出范围的惯性，会更快的结束。至此，所有的代码已经全部完工，完成了一个有惯性，能够回弹的菜单。
+
+
+### 写在最后
+
+写到最后总结下，
+
+* 拖拽的移动和结束事件要监听在body上，同时要注意页面上是否有阻止冒泡的元素，当移动到这些元素上时，body会无法获取事件。 
+* 使用`transform`替代`left/top`实现位移会有更高的效率 
+* 监听`transformEnd`事件来控制用户操作结束后的行为
+* 可以动态的改变`transition-duration`来控制过渡效果是否有效
+* 使用`transition-timing-function`来描述复杂的变化过程
+* 使用`getComputedStyle`获取元素的瞬时样式，即便是在变化过程中
+* 尽可能遵循物理公式计算数值，这样可以让参数变的更直观和易于调整，也更贴切真实世界的感受
+
+整个过程中包含了大量的常量，计算参数，这些参数微小的调整均能够对手感，体验产生影响，要想制作出完美的感觉，就必须不断的调整和优化参数，整体实现仅描述了原理，没有对代码进行封装所以显得比较乱，封装也是一门学问，就不在这里描述了，也难以靠三言两句说清楚。但绝不建议直接把代码拿起来就用。
+
+PS:不知道有多少人能够有耐心看完~看到这里的同学非常有耐心。。。
+
+粘一份全套代码
+
+~~~html
+<style type="text/css">
+body{
+    padding: 0;
+    margin: 0;
+}
+#view{
+    height:500px;
+    width:400px;
+    border:1px solid red;
+    position: relative;
+    left:100px;
+    top:100px;
+    overflow: hidden;
+}
+#list{
+    margin: 0;
+    -webkit-transition-timing-function:cubic-bezier(0.33, 0.66, 0.66, 1);
+    -webkit-transition-property: -webkit-transform;
+    -webkit-user-select: none;
+}
+#list li{
+    height:50px;
+    line-height:35px;
+}
+</style>
+<body>
+    <div id="view">
+        <ul id="list"></ul>
+    </div>
+</body>
+
+<script type="text/javascript">
+
+(function(){
+    var list = document.getElementById('list');
+    var view = document.getElementById('view');
+    var h = [];
+    var temp = new Array(5);
+    for(var i = 1; i <= 40; i++){
+        h.push("<li>" + temp.join(i) + "</li>");
+    }
+    list.innerHTML = h.join("");
+
+    var isDrag = false;
+    var startY = 0;
+    var listY = 0;
+    var drag_before_y = 0;
+    var drag_before_time = null;
+
+    var scroll_min = 0;
+    var scroll_max = list.clientHeight - view.clientHeight;
+    list.addEventListener('mousedown', function(e){
+        var transform = getComputedStyle(list)['webkitTransform']
+        var y = transform.replace(/[^\d-.,]/g, '').split(',')[5];
+        list.style.webkitTransitionDuration = '0ms';
+        list.style.webkitTransform = 'translateY(' + y + 'px)';
+
+        isDrag = true;
+        startY = e.pageY;
+        drag_before_y = listY = parseInt(y) || 0;
+        drag_before_time = new Date();
+
+    });
+    document.body.addEventListener('mousemove', function(e){
+        if(!isDrag){
+            return;
+        }  
+        var d = e.pageY - startY;
+        listY = drag_before_y + d;    
+        if(listY > 0){
+            listY = drag_before_y + d / 2;
+        }else if(listY < -scroll_max){
+            listY = drag_before_y + d / 2;    
+        }  
+        list.style.webkitTransform = 'translateY(' + listY + 'px)';
+    });
+    document.body.addEventListener('mouseup', function(e){
+        isDrag = false;
+        var duration = new Date() - drag_before_time;
+        var dist = listY - drag_before_y;
+        listY = doInertia(dist, duration, listY, list);
+    });
+
+    //执行惯性操作
+    function doInertia(dist, duration, currectY, elem){
+        var v = dist / duration;
+        if(Math.abs(v) > 0.2 && duration < 200 && currectY < 0 && currectY > -scroll_max){
+            // < 0 向下滑动，检查下边界, >0 向上滑动，检查上边界
+            var c = dist < 0 ? currectY + scroll_max : -currectY;
+            var maxDist = c + view.clientHeight / 6;
+            var param = momentum(dist, duration, maxDist);
+            elem.style.webkitTransitionDuration = param.time + 'ms';
+            var toY = currectY + param.dist;            
+            elem.style.webkitTransform = 'translateY(' + toY + 'px)';
+            return toY;
+        }
+        reback();
+        return currectY;
+    };
+
+    list.addEventListener('webkitTransitionEnd', reback);
+    function reback(){
+        if(listY > 0){
+            listY = 0;
+        }else if(listY < -scroll_max){
+            listY = -scroll_max;
+        }  
+        list.style.webkitTransitionDuration = '200ms';
+        list.style.webkitTransform = 'translateY(' + listY + 'px)';
+    };
+
+    //计算惯性
+    function momentum(dist, time, maxDist) {
+        var deceleration = 0.001,
+            speed = Math.abs(dist) / time,
+            newDist = (speed * speed) / (2 * deceleration),
+            newTime = 0;
+
+        if (Math.abs(newDist) > maxDist) {
+            newDist = maxDist;
+            speed = speed / 6;
+        }
+        newDist = newDist * (dist < 0 ? -1 : 1);
+        newTime = speed / deceleration;
+        return { 
+            'dist': newDist, 
+            'time': newTime 
+        };
+    };
+
+})();
+</script>
+~~~

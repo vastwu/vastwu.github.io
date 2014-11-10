@@ -9,11 +9,11 @@
     <title>{{page.title}}</title>
     <link rel="stylesheet" href="/stylesheets/styles.css">
     <link rel="stylesheet" href="/stylesheets/pygment_trac.css">
-    <script src="/javascripts/jquery-1.11.1.min.js"></script>
+    <script src="/libs/jquery-1.11.1.min.js"></script>
     <script src="/javascripts/respond.js"></script>
-    <!--[if lt IE 9]>
-      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
+
+    <script src="/libs/highlight/highlight.pack.js"></script>
+    <link rel="stylesheet" href="/libs/highlight/styles/monokai_sublime.css">
     <!--[if lt IE 8]>
     <link rel="stylesheet" href="stylesheets/ie.css">
     <![endif]-->
@@ -34,7 +34,7 @@
           <p></p>
           <hr>
           <span class="credits left">Project maintained by <a href="https://github.com/vastwu">vastwu</a></span>
-          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/michigangraham">mattgraham</a></span>
+          <span class="credits right">{{page.date | date_to_string }}</span>
         </div>
         <div>
       	{{ content }}
@@ -43,6 +43,25 @@
 
     </div>
     <!--[if !IE]><script>fixScale(document);</script><![endif]-->
-    
+    <script>
+    // marked.setOptions({
+    //     renderer: new marked.Renderer(),
+    //     gfm: true,
+    //     tables: true,
+    //     breaks: false,
+    //     pedantic: false,
+    //     sanitize: true,
+    //     smartLists: true,
+    //     smartypants: false,
+    //     highlight:function(code, lang){
+    //         return hljs.highlightAuto(code, lang ? [lang] : undefined).value;
+    //     }
+    // });
+    $('pre > code').each(function(index, code){
+    	code.innerHTML = hljs.highlightAuto(code.textContent, undefined).value;
+    })
+    //response.data.html = marked(response.data.content);
+
+    </script>
   </body>
 </html>

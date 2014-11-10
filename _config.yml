@@ -1,11 +1,13 @@
-highlighter: pygments
+paginate: 10
+paginate_path: "/page:num"
+excerpt_separator: "<!--more-->"
 markdown: kramdown
 markdown_ext: md
-gems: [kramdown, pygments]
+gems: [kramdown]
 kramdown:
   auto_ids: true
   footnote_nr: 1
   entity_output: as_char
   toc_levels: 1..6
   smart_quotes: lsquo,rsquo,ldquo,rdquo
-  use_coderay: true
+  enable_coderay: false
