@@ -1,0 +1,67 @@
+---
+
+---
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>{{page.title}}</title>
+    <link rel="stylesheet" href="/stylesheets/styles.css">
+    <link rel="stylesheet" href="/stylesheets/pygment_trac.css">
+    <script src="/libs/jquery-1.11.1.min.js"></script>
+    <script src="/javascripts/respond.js"></script>
+
+    <script src="/libs/highlight/highlight.pack.js"></script>
+    <link rel="stylesheet" href="/libs/highlight/styles/monokai_sublime.css">
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="stylesheets/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+  </head>
+  <body>
+      <div id="header">
+        <nav>
+          <li class="fork"><a href="https://github.com/vastwu">View On GitHub</a></li>
+        </nav>
+      </div><!-- end header -->
+		{{site.url}}
+    <div class="wrapper">
+      <section>
+        <div id="title">
+          <h1>{{page.title}}</h1>
+          <p></p>
+          <hr>
+          <span class="credits left">Project maintained by <a href="https://github.com/vastwu">vastwu</a></span>
+          <span class="credits right">{{page.date | date_to_string }}</span>
+        </div>
+        <div>
+      	{{ content }}
+      	</div>
+      </section>
+
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+    <script>
+    // marked.setOptions({
+    //     renderer: new marked.Renderer(),
+    //     gfm: true,
+    //     tables: true,
+    //     breaks: false,
+    //     pedantic: false,
+    //     sanitize: true,
+    //     smartLists: true,
+    //     smartypants: false,
+    //     highlight:function(code, lang){
+    //         return hljs.highlightAuto(code, lang ? [lang] : undefined).value;
+    //     }
+    // });
+    $('pre > code').each(function(index, code){
+    	code.innerHTML = hljs.highlightAuto(code.textContent, undefined).value;
+    })
+    //response.data.html = marked(response.data.content);
+
+    </script>
+  </body>
+</html>
