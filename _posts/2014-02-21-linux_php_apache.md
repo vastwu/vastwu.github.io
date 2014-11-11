@@ -1,9 +1,9 @@
 ---
 layout: post
 title: 记一次linux下编译安装php加apache的经历
+category: work
 ---
 
-# 记一次linux下编译安装php加apache的经历
 
 ### 大概背景
 因工作需要,在一台远程服务器上需要部署个apache + php + mysql的环境,犹豫机器上已经包含了apache和mysql,困难之处就在于php上,由于一些工作网络环境的限制,不能使用全局的自动安装工具,也无法操作自身用户之外的目录(`/home/users/vastwu`)

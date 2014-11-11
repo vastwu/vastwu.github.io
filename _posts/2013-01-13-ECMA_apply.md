@@ -1,10 +1,12 @@
 ---
 layout: post
 title: ECMA探秘,比较操作符和apply
+category: javascript
 ---
 
 最近打算深入下javascript的源头，就找了ECMAScript来看，全部基于2011年6月的5.1版本
 
+<!--more-->
 
 ### 关于比较操作
 

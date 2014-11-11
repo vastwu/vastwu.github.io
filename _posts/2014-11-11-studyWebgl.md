@@ -1,6 +1,8 @@
 ---
 layout: post
 title: webgl学习经验整理(一)
+tags: 动画 3D
+category: webgl
 ---
 
 # 大纲
@@ -15,6 +17,9 @@ title: webgl学习经验整理(一)
 * 动画设计
     * 绘制刷新
 * 性能优化
+
+<!--more-->
+
 
 # 绘制流程详解
 

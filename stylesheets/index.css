@@ -1,0 +1,63 @@
+body{
+    background-color: #1c1c1c;
+}
+.card{
+    background-color: #2a2a29;
+    padding:5px 20px 20px;
+}
+.post-list{
+    list-style: none;
+    padding:0;
+}
+.post-list h1,
+.post-list h2,
+.post-list h3,
+.post-list h4{
+    font-size:14px;
+}
+.post-item{
+    /*background: linear-gradient(#1c1c1c, #2a2a29);*/
+    margin-bottom:20px;
+}
+.post-header{
+    line-height: 35px;
+    margin:10px 0;
+}
+.post-title{
+    font-size:24px;
+    letter-spacing: 0.1em;
+    display:block;
+}
+.post-content{
+    margin-left:20px;
+    opacity:0.8;
+}
+.post-time{
+    float:right;
+}
+.post-more{
+
+}
+.post-footer{
+    height:20px;
+    line-height:20px;
+}
+.pagination{
+    text-align: center;
+}
+.left{
+    float:left;
+    width:250px;
+}
+.right{
+    margin-left:300px;
+}
+
+
+.icon.github{
+    width:48px;
+    height:48px;
+    background-image: url(/images/icon-github.png);
+    display:inline-block;
+    background-size: 100%;
+}

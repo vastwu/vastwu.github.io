@@ -1,9 +1,8 @@
 ---
 layout: post
 title: javascript动画设计简介 --- 动画效果指导思想
+category: javascript
 ---
-
-# javascript动画设计简介 --- 动画效果指导思想
 
 通过连贯的改变dom元素的位置达到视觉上动画效果
 

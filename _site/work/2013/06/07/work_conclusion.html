@@ -1,0 +1,262 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>最近的一些工作总结</title>
+    <link rel="stylesheet" href="/stylesheets/styles.css">
+    <link rel="stylesheet" href="/stylesheets/post.css">
+    <script src="/libs/jquery-1.11.1.min.js"></script>
+    <script src="/javascripts/respond.js"></script>
+
+    <script src="/libs/highlight/highlight.pack.js"></script>
+    <link rel="stylesheet" href="/libs/highlight/styles/monokai_sublime.css">
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="stylesheets/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+  </head>
+  <body>
+      <div id="header">
+        <nav>
+          <li class="fork"><a href="https://github.com/vastwu">View On GitHub</a></li>
+        </nav>
+      </div><!-- end header -->
+		
+    <div class="wrapper">
+      <section>
+        <div id="title">
+          <h1>最近的一些工作总结</h1>
+          <p>work</p>
+          <hr>
+          <span class="credits left">TAGS:
+
+</span>
+          <span class="credits right">07 Jun 2013</span>
+        </div>
+        <div>
+      	<p>赶上winter老师的问题,正好借机总结下最近的工作哈</p>
+
+<!--more-->
+
+<h2 id="section">讲几个你在项目中解决的让你印象最深的问题（难、匪夷所思、解决方案有趣都可以）</h2>
+
+<p>前一阵做个时间轴+动画的组件遇到的两个问题和解决方案</p>
+
+<p>先说下代码的大概逻辑,时间轴是一个以固定帧率的setInterval,时间轴中可以被加入数个执行函数,当执行函数至少有一个时,setInterval启动,全部移除时clearInterval
+主体部分逻辑如下(若函数返回true,则只执行一帧后退出时间轴)</p>
+
+<pre><code>runner = window.setInterval(function(){
+    TimeShaft.run(new Date().getTime());
+}, 1000 / MAX_FPS);
+
+//run的实现
+run:function(now){
+each(handlers, function(h, id){
+        if(h.handler() === true){
+            TimeShaft.remove(id);
+        }
+    }
+}
+</code></pre>
+
+<!--more-->
+
+<h2 id="section-1">问题一:关于动画函数中的错误处理</h2>
+
+<p>时间轴中加入的函数如果报错,由于是异步执行,并不会阻止run的执行,而是打断当前帧剩余的执行,抛出错误,下一帧开始后继续执行,报错的循环
+以此为基础的动画实现中可能导致永远无法到达结束条件的情况,并不停的报错,在调试过程中卡死浏览器等等,
+本着函数之间互不干扰的原则,期望可以在一个函数报错的情况下,不影响其他函数运行,</p>
+
+<h3 id="section-2">初步方案</h3>
+
+<pre><code class="language-javascript">//run的实现
+run:function(now){
+    each(handlers, function(h, id){
+        try{
+            if(h.handler() === true){
+                TimeShaft.remove(id);
+            }
+        }catch(error){
+            throw new Error(...)
+        }
+    }
+}
+</code></pre>
+
+<p>问题来了,函数在出错后,仍旧会无限抛出错误,并且很难定位,抛出错误的行号会是在catch的位置,并非所有浏览器的error对象有那么多数据
+随后尝试了在catch中主动 remove 掉报错的函数,解决了无限抛出错误但是定位问题仍旧没有解决.</p>
+
+<h3 id="section-3">最终方案</h3>
+
+<pre><code class="language-javascript">//run的实现
+run:function(now){
+    each(handlers, function(h, id){
+        if(errorKey){
+            TimeShaft.remove(errorKey);
+            if(errorKey == id){
+                return;
+            }
+        }
+        //如果handler顺利运行结束，则errorkey会是undefined，
+        //否则会记录下出错的函数
+        //在下一帧会移除该函数
+        errorKey = id;
+        if(h.handler() === true){
+            TimeShaft.remove(id);
+        }
+        errorKey = undefined;
+    }
+}
+</code></pre>
+
+<p>在每个函数执行前,在父级环境中保存一份其id,只有handler顺利执行结束后,errorKey会被重置,一旦期间某个函数报错,打断了当前帧的顺利执行,errorKey会保存下这个出错的函数id
+在下一帧执行时,便会移除该函数,最终的结果是,出错的函数在运行一帧之后,在其报错的问题抛出了错误,退出时间轴,并且正确的函数在随后都可以正确的执行</p>
+
+<h2 id="section-4">问题二:期望能以小于最高帧率的任意帧率运行</h2>
+
+<p>因为这个时间轴并非仅为动画类服务,他可以用来负责一些精度要求不高,需要节流或控制频率的函数,
+例如canvas的render操作,三维模型的旋转计算,合并一段时间内多个单独请求变为批量请求等</p>
+
+<p>那么就出现了优先级的问题,cpu性能有限,理想的最大帧率是60(PS:其实35帧左右的动画效果人眼就分辨不出来了),即大约16ms执行一次run,但实际在复杂的环境中执行频率会低于这个值,有一些优先级不高,可以以更低频率执行的函数就没必要跟优先级高的函数抢时间,
+有简单暴力的方式就是再开一个setInterval,但并不理想,帧率会变得更难以控制,只有一个时间轴可以让很多事情统一管理起来,需求就是这样,
+在一个setInterval的基础上,可以运行多个不同帧率的函数</p>
+
+<h3 id="section-5">初步方案</h3>
+
+<p>使用了跳帧的方式,即每个函数有一个skipFrame的值,每隔这么多帧运行一次,带来的问题有</p>
+
+<ul>
+  <li>只能以固定的帧率倍数运行,如果最大帧率是60,那么隔1帧运行一次就是30, 隔2帧一次就是15等等,无法实现例如35,40这种帧率</li>
+  <li>需要对每一帧进行编号,记录当前是第几帧,然后除下来计算当前函数是否需要运行</li>
+  <li>考虑过以 thisFrameNumber % skipFrame &lt; 某个值的方式来改变运行周期,但这种方式对外难以提供友好的参数,不太好理解,也不好计算</li>
+</ul>
+
+<h3 id="section-6">最终方案</h3>
+
+<p>以上方案被否决后,重新思考了一下帧率的本质,即每隔x时间执行一次,控制帧率只要控制好这个时间间隔即可,时间轴的setInterval以最大帧率的时间间隔运行,只要在其合适的位置插入被降帧执行的函数即可,最后的run部分如此,在将函数加入到时间轴时,可以传入期望运行的FPS,<code>h.interFrame = 1000 / FPS;</code>,并计算好间隔时间.最终的run函数时间主要部分如下</p>
+
+<pre><code class="language-javascript">run:function(now){
+    each(handlers, function(h, id){
+        if(errorKey){
+            TimeShaft.remove(errorKey);
+            if(errorKey == id){
+                return;
+            }
+        }
+        //非默认帧数,且之前已经运行过了，此处要计算当前帧是否需要运行
+        //若还没有运行过，则执行第一帧
+        if(h.FPS &amp;&amp; h.prevRunTime){
+            //当前时间与上次运行时间小每帧间隔 不运行
+            if(now - h.prevRunTime &lt;= h.interFrame){
+                return;
+            }
+        }
+        //如果handler顺利运行结束，则errorkey会是undefined，否则会记录下出错的函数
+        //在下一帧会移除该函数
+        errorKey = id;
+        if(h.handler(now - h.startTime, h.prevRunTime) === true){
+            TimeShaft.remove(id);
+        }
+        errorKey = undefined;
+        //记录每个函数的当前帧的运行时间，用于和下一帧作比较
+        h.prevRunTime = now;
+    });
+}
+</code></pre>
+
+<p>每一帧运行时,如果当前函数有指定的fps,会按照上一次运行的事件距现在的时间间隔计算是否运行,
+实质上是将低帧率函数的每一帧合并到距离最高帧率运行的最近的下一次中一同执行.</p>
+
+<h2 id="javascript">在JavaScript面向对象方面，你有什么体会和实践？</h2>
+
+<p>js面向对象采用的是原型机制，每个对象成员会有原型对象，在当前对象身上获取成员的操作，当无法找到时，会尝试从原型身上获取，
+若失败则会不断地向上追朔直至原型链的顶端，好处是可以用来实现继承，子类可以仅复写部分成员，当子类实例的某个未实现的成员被调用时，
+可以自动调用原型链上的上层成员，某些系统成员例如toString等也可以用子类自定义实现来覆盖读取的父类成员，并且不会对父类产生影响
+缺陷就是原型查找过程有额外的性能开销</p>
+
+<p>我自己对对象的态度变化过程是
+不敢用-&gt;尽可能广泛的用-&gt;尽可能少用-&gt;合适的时候用</p>
+
+<ul>
+  <li>
+    <p>原型机制只有在类会产生大量实例时才有好的收益,早先我在很多只会有一个实例的场景中也很喜欢写成 new + prototype的方式,实则没有必要,
+带来额外的原型链查找消耗,也没有发挥原型成员节省内存的优势.</p>
+  </li>
+  <li>
+    <p>灵活使用call和apply可以使一些功能可以方便的被抽象为单独的函数,例如一个类似装饰着概念的模式中,obj就是一个标准单位,使用 cola.call(obj), 
+ice.call(obj)即可对obj进行一系列的扩展,随后cola函数还可以用去扩展别的对象</p>
+  </li>
+  <li>
+    <p>this是个很方便的东西,它指代的在不同场景会是不同的指代,结合call apply甚至可以做出如下类型的函数使用,</p>
+  </li>
+</ul>
+
+<pre><code class="language-javascript">function howl(){
+    if(this instanceof Dog){ 
+        alert ('wangwang');
+    }else if(this instanceof Cat){ 
+        alert('miaomiao');
+    }
+}
+howl.call(x); //x是Dog或者Cat的实例
+</code></pre>
+
+<ul>
+  <li>之前犯过小错误,现在想来还是蛮有意思的,大致场景如下</li>
+</ul>
+
+<pre><code class="language-javascript">function Class_A(){
+    this.count++;
+}
+Class_A.prototype.data = [];
+Class_A.prototype.count = 0;
+
+var a = new Class_A();
+a.data.push(0);
+
+var a2 = new Class_A();
+a2.data.push(1);
+
+alert(a2.count);
+alert(a2.data.length);
+</code></pre>
+
+<p>其中A是某个类,在不同场景会有多个实例,其中count和 data均定义在Class_A的原型上
+最后的两个alert分别反映了两种原型属性的使用场景</p>
+
+<ul>
+  <li>在Class_A的构造函数中, <code>this.count++</code>等价于<code>this.count = this.count+1</code>赋值语句,右侧的this.count取值时,在this身上还没有该属性,于是寻找原型,来源于原型,取值为<code>0+1=1</code>,左侧的this.count中的<code>this</code>是实例,该赋值被写在了实例上,所以<code>alert(a2.count)</code>结果为1,无论多少个实例,初始化后的count均为1,</li>
+  <li>a和a2两个实例的data.push操作,在实例身上没有此成员,均会直接操作原型链上的成员,结果data.length为2,即所有实例公用一个原型的data属性.</li>
+</ul>
+
+<p>当时这两种情况弄得我百思不得其解,一番反复尝试后琢磨明白了,也对原型和实例属性分辨的更明确了.</p>
+
+      	</div>
+      </section>
+
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+    <script>
+    // marked.setOptions({
+    //     renderer: new marked.Renderer(),
+    //     gfm: true,
+    //     tables: true,
+    //     breaks: false,
+    //     pedantic: false,
+    //     sanitize: true,
+    //     smartLists: true,
+    //     smartypants: false,
+    //     highlight:function(code, lang){
+    //         return hljs.highlightAuto(code, lang ? [lang] : undefined).value;
+    //     }
+    // });
+    $('pre > code').each(function(index, code){
+    	code.innerHTML = hljs.highlightAuto(code.textContent, undefined).value;
+    })
+    //response.data.html = marked(response.data.content);
+
+    </script>
+  </body>
+</html>

@@ -1,0 +1,44 @@
+<style>
+    .left-block{
+        margin-bottom:30px;
+    }
+    .left-block h1{
+        border-bottom:2px white solid;
+        padding-bottom: 10px;
+    }
+    .left-block p{
+        margin:2px 0 2px 20px;
+    }
+    .header-image{
+        overflow: hidden;
+        border-radius:100%;
+        width:150px;
+        height:150px;
+        margin:10px auto;
+        transition: opacity 300ms;
+    }
+    .less{
+        color:#777;
+    }  
+</style>
+
+<div class="left-block about-me">
+    <h1>About me</h1>
+    <div class="header-image" style="opacity:0;">
+        <a href="/">
+            <img src="{{ 'vincentwu53@hotmail.com' | get_gravatar }}?s=400"  onload="this.parentNode.parentNode.style.opacity=1;" />
+        </a>
+    </div>
+    <p>vastwu</p>
+    <p>Front-end Engineer</p>
+    <p>Baidu lbs-streetview</p>
+    <div style="display:none">
+        <a class="icon github" href="https://github.com/vastwu" target="_blank"></a>
+    </div>
+</div>
+<div class="left-block categories">
+    <h1>Categories</h1>
+    {% for category in site.categories %}
+    <p><a class="category" href="categories.html#{{category[0]}}">{{ category[0] }} ({{ category[1].size }})</a></p>
+    {% endfor %}
+</div>

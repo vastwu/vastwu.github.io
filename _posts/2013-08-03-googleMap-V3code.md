@@ -1,9 +1,9 @@
 ---
 layout: post
 title: googleMap - V3 部分解析
+category: javascript
 ---
 
-## googleMap - V3 部分解析
 #### 模块加载机制
 
 google没有用目前很流行cmd，amd的那套方式，起码在生产环境中没有，而是通过闭包的方式加大了压缩强度，使得代码变得更简短，查看代码成本也更高（这个对学习来说难度陡增）
@@ -11,6 +11,8 @@ google没有用目前很流行cmd，amd的那套方式，起码在生产环境�
 首先，google的后台支持批量加载，这个没啥新鲜的
 `https://maps.gstatic.com/cat_js/intl/zh_tw/mapfiles/api-3/13/12/%7Bcommon,map%7D.js`
 加载了common和map两个模块
+
+<!--more-->
 
 该请求的返回值为以下方式
 

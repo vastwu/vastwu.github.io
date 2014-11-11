@@ -1,15 +1,16 @@
 ---
 layout: post
 title: node学习笔记（创建持久连接和通信）
+category: work
 ---
 
-# node学习笔记（创建持久连接和通信）
 
 开年第一篇，上班用了一段时间mac，回家就给window装上了powershell，sublime打开了vim快捷键，一下感觉高达上了有没有。
 
 最近工作中有了些机会和需要，搞了下node，之前的node总局限于本地文件操作，开发build脚本什么之类的，
 这次尝试了下网络相关的玩意，普通的Server很简单，记录下怎么弄个最简单的web-socket
 
+<!--more-->
 
 ### Server部分(server.js)
 

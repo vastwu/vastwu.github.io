@@ -3,9 +3,9 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title></title>
+    <title>Vastwu.GitHub.io by vastwu</title>
     <link rel="stylesheet" href="/stylesheets/styles.css">
-    <link rel="stylesheet" href="/stylesheets/pygment_trac.css">
+    <link rel="stylesheet" href="/stylesheets/index.css">
     <script src="/libs/jquery-1.11.1.min.js"></script>
     <script src="/javascripts/respond.js"></script>
     <!--[if lt IE 9]>
@@ -16,63 +16,175 @@
     <![endif]-->
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 
-  </head>
-  <body>
+</head>
+<body>
       <!--
       help: http://jekyllcn.com/docs/posts/
       -->
-      <div id="header">
+    <div id="header">
         <nav>
-          <li class="fork"><a href="https://github.com/vastwu">View On GitHub</a></li>
+            <li class="fork"><a href="https://github.com/vastwu" target="_blank">View On GitHub</a></li>
         </nav>
-      </div><!-- end header -->
-
+    </div>
     <div class="wrapper">
-      <section>
-        <div id="title">
-          <h1>Vastwu.GitHub.io</h1>
-          <p></p>
-          <hr>
+        <div>
+            <section class="left">
+                <style>
+    .left-block{
+        margin-bottom:30px;
+    }
+    .left-block h1{
+        border-bottom:2px white solid;
+        padding-bottom: 10px;
+    }
+    .left-block p{
+        margin:2px 0 2px 20px;
+    }
+    .header-image{
+        overflow: hidden;
+        border-radius:100%;
+        width:150px;
+        height:150px;
+        margin:10px auto;
+        transition: opacity 300ms;
+    }
+    .less{
+        color:#777;
+    }  
+</style>
+
+<div class="left-block about-me">
+    <h1>About me</h1>
+    <div class="header-image" style="opacity:0;">
+        <a href="/">
+            <img src="//www.gravatar.com/avatar/502cbb29b33090f0a7b240b137fe8a1b?s=400"  onload="this.parentNode.parentNode.style.opacity=1;" />
+        </a>
+    </div>
+    <p>vastwu</p>
+    <p>Front-end Engineer</p>
+    <p>Baidu lbs-streetview</p>
+    <div style="display:none">
+        <a class="icon github" href="https://github.com/vastwu" target="_blank"></a>
+    </div>
+</div>
+<div class="left-block categories">
+    <h1>Categories</h1>
+    
+    <p><a class="category" href="categories.html#javascript">javascript (7)</a></p>
+    
+    <p><a class="category" href="categories.html#css3">css3 (1)</a></p>
+    
+    <p><a class="category" href="categories.html#work">work (4)</a></p>
+    
+    <p><a class="category" href="categories.html#vim">vim (2)</a></p>
+    
+    <p><a class="category" href="categories.html#webgl">webgl (1)</a></p>
+    
+</div>
+            </section>
+            <section class="right">
+                <ul class="post-list">
+  
+    <li class="post-item card">
+        <div class="post-header">
+            <span class="post-time" >14 May 2013</span>
+            <a class="post-title" href="/css3/2013/05/14/css3_doinertia.html" target="_blank">用css3做一个简单的惯性效果</a>
+            
         </div>
-        <h3>
-          <a id="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages" aria-hidden="true">
-            <span class="octicon octicon-link"></span>
-          </a>Welcome to GitHub Pages.
-        </h3>
-        <ul>
-          
-            <li>
-              <a href="/2013/05/03/IE9%20iframe_undefined_error.html" target="_blank">IE9 iframe中原生对象未定义错误原因</a>
-              <div></div>
-            </li>
-          
-            <li>
-              <a href="/2013/04/21/javascript_val_ref.html" target="_blank">科学的姿势理解javascript的变量引用</a>
-              <div></div>
-            </li>
-          
-            <li>
-              <a href="/2013/01/20/javascript_cache_control.html" target="_blank">js中的内存控制</a>
-              <div></div>
-            </li>
-          
-            <li>
-              <a href="/2013/01/13/ECMA_apply.html" target="_blank">ECMA探秘,比较操作符和apply</a>
-              <div></div>
-            </li>
-          
-            <li>
-              <a href="/2013/01/07/some%20useful%20tip%20for%20js.html" target="_blank">js中的小技巧总结</a>
-              <div></div>
-            </li>
-          
-        </ul>
-        <!-- 分页链接 -->
-        <div class="pagination">
+        <div class="post-content"><p>常见的菜单交互中，经常会增加一些拖拽的惯性动作，来使得菜单的操作感更接近现实,下面来看如何使用css3的方式来实现惯性效果
+PS：下文中的部分资料来自网络，其中包括<a href="http://www.slipjs.com/">SlipJs</a>中的代码给我很大启发（感谢作者），文中有部分引用和修改。</p>
+
+</div>
+        <div class="post-footer">
+            <a class="post-more" href="/css3/2013/05/14/css3_doinertia.html" target="_blank">more</a>
+        </div>
+    </li>
+  
+    <li class="post-item card">
+        <div class="post-header">
+            <span class="post-time" >03 May 2013</span>
+            <a class="post-title" href="/2013/05/03/IE9%20iframe_undefined_error.html" target="_blank">IE9 iframe中原生对象未定义错误原因</a>
+            
+        </div>
+        <div class="post-content"><h4 id="section">起因</h4>
+<p>今天碰到个朋友发现ie9会报”Date”未定义（如图），帮其定位问题时发现的</p>
+
+<p><code>SCRIPT5009:"Date 未定义"</code></p>
+
+<h4 id="section-1">排查</h4>
+<p>先行google了一下，发现有很多类似问题提到了与<code>iframe</code>有关，于是便询问了下对方是否有使用<code>iframe</code>，确有，接下来发现该问题产生与操作<code>iframe</code>有关，大概整理了下，</p>
+
+</div>
+        <div class="post-footer">
+            <a class="post-more" href="/2013/05/03/IE9%20iframe_undefined_error.html" target="_blank">more</a>
+        </div>
+    </li>
+  
+    <li class="post-item card">
+        <div class="post-header">
+            <span class="post-time" >21 Apr 2013</span>
+            <a class="post-title" href="/javascript/2013/04/21/javascript_val_ref.html" target="_blank">科学的姿势理解javascript的变量引用</a>
+            
+        </div>
+        <div class="post-content"><p>从上学时代起，就被告知计算机中存在值引用和址引用两种方式，其实一直也不是很明白，在js里也一直是模模糊糊，只知道5中值引用，在对象的引用概念上也不是特别确定，最近在追了以下js的内存问题，顺便也就把地址引用的逻辑试了一下。</p>
+
+<p>有时候函数中的参数变量会被其他场景的代码改变，比如一个数组变量用着用着就变了，一看原来是有其他代码在操作，有时候似乎又不会变，要手动去更新，把下面的都看完相信就都会有明确的答案了。</p>
+
+</div>
+        <div class="post-footer">
+            <a class="post-more" href="/javascript/2013/04/21/javascript_val_ref.html" target="_blank">more</a>
+        </div>
+    </li>
+  
+    <li class="post-item card">
+        <div class="post-header">
+            <span class="post-time" >20 Jan 2013</span>
+            <a class="post-title" href="/javascript/2013/01/20/javascript_cache_control.html" target="_blank">js中的内存控制</a>
+            
+        </div>
+        <div class="post-content"><p>之前是看seajs的那个变态的测试用例，用自己的加载器去尝试运行，一开始就浏览器崩溃崩溃，后来在不断地挖掘和学习过程中，现在终于也能顺利地跑下来啦，这期间有一些多多少少的收获，连自己沉淀带分享，希望能给大家带来些帮助</p>
+
+</div>
+        <div class="post-footer">
+            <a class="post-more" href="/javascript/2013/01/20/javascript_cache_control.html" target="_blank">more</a>
+        </div>
+    </li>
+  
+    <li class="post-item card">
+        <div class="post-header">
+            <span class="post-time" >13 Jan 2013</span>
+            <a class="post-title" href="/javascript/2013/01/13/ECMA_apply.html" target="_blank">ECMA探秘,比较操作符和apply</a>
+            
+        </div>
+        <div class="post-content"><p>最近打算深入下javascript的源头，就找了ECMAScript来看，全部基于2011年6月的5.1版本</p>
+
+</div>
+        <div class="post-footer">
+            <a class="post-more" href="/javascript/2013/01/13/ECMA_apply.html" target="_blank">more</a>
+        </div>
+    </li>
+  
+    <li class="post-item card">
+        <div class="post-header">
+            <span class="post-time" >07 Jan 2013</span>
+            <a class="post-title" href="/javascript/2013/01/07/some%20useful%20tip%20for%20js.html" target="_blank">js中的小技巧总结</a>
+            
+        </div>
+        <div class="post-content"><p>前一阵面试被问到js代码的性能优化，不结合业务场景一时发现想不起来什么，之前有些做的真是浪费了，这里大致总结下，都不是什么新鲜玩意。</p>
+
+</div>
+        <div class="post-footer">
+            <a class="post-more" href="/javascript/2013/01/07/some%20useful%20tip%20for%20js.html" target="_blank">more</a>
+        </div>
+    </li>
+  
+</ul>
+                <!-- 分页链接 -->
+                <div class="pagination">
     
     <span class="previous">
       
-        <a href="/">Previous</a>
+        <a href="/">Prev</a>
       
     </span>
   
@@ -94,12 +206,10 @@
       <span>Next</span>
     </span>
   
-
 </div>
-      </section>
-
+            </section>
+      </div>
     </div>
     <!--[if !IE]><script>fixScale(document);</script><![endif]-->
-    
   </body>
 </html>
