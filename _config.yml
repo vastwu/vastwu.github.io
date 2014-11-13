@@ -1,6 +1,6 @@
 author: vastwu
 author_avatar: user_avatar.jpg
-headerImage: header.png
+headerImage: header.jpg
 
 paginate: 10
 paginate_path: "/page:num"
