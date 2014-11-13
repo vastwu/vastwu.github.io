@@ -42,6 +42,27 @@ body{
     height:20px;
     line-height:20px;
 }
+
+.post-image-header{
+    position: relative;
+    line-height: 0;
+    max-height:300px;
+}
+.post-image-header img{
+    width:100%;
+    max-height:300px;
+}
+.post-image-header-container{
+    position: absolute;
+    bottom:0;
+    background-color: rgba(0, 0, 0, 0.7);
+    height:50px;
+    line-height: 50px;
+    width:100%;
+    text-indent: 15px;
+}
+
+
 .pagination{
     text-align: center;
 }
@@ -54,10 +75,15 @@ body{
 }
 
 
-.icon.github{
-    width:48px;
-    height:48px;
-    background-image: url(/images/icon-github.png);
-    display:inline-block;
-    background-size: 100%;
+.page-header-image{
+    text-align: center;
+    vertical-align: middle;
+    overflow: hidden;
+    height:300px;
+    border-radius:3px;
+    box-shadow: 1px 1px 15px 1px black;
+}
+.page-header-image img{
+    width:100%;
+    margin-top:-50px;
 }

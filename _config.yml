@@ -1,4 +1,7 @@
 author: vastwu
+author_avatar: user_avatar.jpg
+headerImage: header.png
+
 paginate: 10
 paginate_path: "/page:num"
 excerpt_separator: "<!--more-->"

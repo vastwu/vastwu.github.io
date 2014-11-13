@@ -3,6 +3,7 @@ layout: post
 title: webgl学习经验整理(一)
 tags: 动画 3D
 category: webgl
+image: /images/earth_roll.png
 ---
 
 # 大纲
