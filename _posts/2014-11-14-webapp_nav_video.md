@@ -1,9 +1,8 @@
 ---
 layout: post
 title: webapp视频导航播放调研
-tags: 动画 3D
-category: webgl
-image: /images/earth_roll.jpg
+tags: hls
+category: webapp
 ---
 
 ## 根据sohu和youku的视频,做了下调研,结论如下
