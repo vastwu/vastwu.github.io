@@ -1,0 +1,96 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>webapp视频导航播放调研</title>
+    <link rel="stylesheet" href="/stylesheets/styles.css">
+    <link rel="stylesheet" href="/stylesheets/post.css">
+    <script src="/libs/jquery-1.11.1.min.js"></script>
+    <script src="/javascripts/respond.js"></script>
+
+    <script src="/libs/highlight/highlight.pack.js"></script>
+    <link rel="stylesheet" href="/libs/highlight/styles/monokai_sublime.css">
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="stylesheets/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+  </head>
+  <body>
+      <div id="header">
+        <nav>
+          <li class="fork"><a href="https://github.com/vastwu">View On GitHub</a></li>
+        </nav>
+      </div><!-- end header -->
+    <div class="wrapper">
+      <section>
+        <div id="title">
+          <h1>webapp视频导航播放调研</h1>
+          <p> 
+<a>hls</a>
+
+&nbsp;</p>
+          <hr>
+          <span class="credits left">
+            <a class="back-link" href="/">&lt;&lt;&nbsp;返回列表</a>
+          </span>
+          <span class="credits right">14 Nov 2014</span>
+        </div>
+        <div>
+      	<h2 id="sohuyouku">根据sohu和youku的视频,做了下调研,结论如下</h2>
+
+<ul>
+  <li>分端视频采用<code>HLS (Http Live Streaming)</code>实现</li>
+  <li>原理是<code>html5</code>标签的<code>src</code>引用一个<code>.m3u8</code>文件, 该文件内容为描述播放列表,一个简单的<code>.m3u8文件格式如下</code></li>
+</ul>
+
+<pre><code>#EXTM3U
+#EXT-X-TARGETDURATION:30
+#EXT-X-VERSION:3
+#EXTINF:4,
+video/ts/a.ts
+#EXTINF:4,
+video/ts/b.ts
+#EXT-X-ENDLIST
+</code></pre>
+
+<ul>
+  <li>每行解释如下:
+    <ol>
+      <li>固定的头信息</li>
+      <li>每个分段视频文件的最大长度(秒)</li>
+      <li>描述版本类型(固定3即可)</li>
+      <li>从本行开始, 当前行和下一行为一对描述信息,当前行描述当前分段的持续时间(秒),下一行为改分段视频的地址, 更多的分段在后面成对添加即可</li>
+      <li>最后一行为结尾结束标记</li>
+    </ol>
+  </li>
+  <li>该列表格式需要提供<code>.ts</code>的视频压缩类型, 跟大全确认了下我们可以生成, 文件尺寸上会比<code>mp4</code>略大</li>
+  <li>该方式直接支持分段下载,播放,拖拽,加速等功能,只要生成了正确的<code>.m3u8</code>文件,前端无需关注针对视频的操作, 仅支持开始播放即可.</li>
+  <li>该方式支持<code>ios</code>和<code>较新的android</code>系统,在低端机上未做测试</li>
+  <li>应用该方案需要提供一个可以根据参数返回<code>.m3u8</code>文件内容的接口, 且该接口可以正确的拼接视频地址和视频时长</li>
+</ul>
+
+
+      	</div>
+      </section>
+      <div id="disqus_thread"></div>
+<script>
+function disqus_config() {
+    this.callbacks.onReady.push(function() {});
+    this.callbacks.onInit.push(function() {});  
+}
+
+</script>
+<script src="//vastwu.disqus.com/embed.js" type="text/javascript" async="true"></script>
+
+    
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+    <script>
+    $('pre > code').each(function(index, code){
+    	code.innerHTML = hljs.highlightAuto(code.textContent, undefined).value;
+    });
+    </script>
+  </body>
+</html>
