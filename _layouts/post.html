@@ -41,28 +41,13 @@
       	{{ content }}
       	</div>
       </section>
-
+      {% include comment.html %}
     </div>
     <!--[if !IE]><script>fixScale(document);</script><![endif]-->
     <script>
-    // marked.setOptions({
-    //     renderer: new marked.Renderer(),
-    //     gfm: true,
-    //     tables: true,
-    //     breaks: false,
-    //     pedantic: false,
-    //     sanitize: true,
-    //     smartLists: true,
-    //     smartypants: false,
-    //     highlight:function(code, lang){
-    //         return hljs.highlightAuto(code, lang ? [lang] : undefined).value;
-    //     }
-    // });
     $('pre > code').each(function(index, code){
     	code.innerHTML = hljs.highlightAuto(code.textContent, undefined).value;
-    })
-    //response.data.html = marked(response.data.content);
-
+    });
     </script>
   </body>
 </html>

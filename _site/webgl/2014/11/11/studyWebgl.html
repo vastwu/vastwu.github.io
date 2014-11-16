@@ -183,28 +183,23 @@ gl.useProgram(glProgram.program);
 
       	</div>
       </section>
+      <div id="disqus_thread"></div>
+<script>
+function disqus_config() {
+    this.callbacks.onReady.push(function() {});
+    this.callbacks.onInit.push(function() {});  
+}
 
+</script>
+<script src="//vastwu.disqus.com/embed.js" type="text/javascript" async="true"></script>
+
+    
     </div>
     <!--[if !IE]><script>fixScale(document);</script><![endif]-->
     <script>
-    // marked.setOptions({
-    //     renderer: new marked.Renderer(),
-    //     gfm: true,
-    //     tables: true,
-    //     breaks: false,
-    //     pedantic: false,
-    //     sanitize: true,
-    //     smartLists: true,
-    //     smartypants: false,
-    //     highlight:function(code, lang){
-    //         return hljs.highlightAuto(code, lang ? [lang] : undefined).value;
-    //     }
-    // });
     $('pre > code').each(function(index, code){
     	code.innerHTML = hljs.highlightAuto(code.textContent, undefined).value;
-    })
-    //response.data.html = marked(response.data.content);
-
+    });
     </script>
   </body>
 </html>
