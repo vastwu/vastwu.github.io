@@ -1,3 +1,9 @@
+---
+layout: post
+title: linux安装配置elk日志系统
+category: javascript
+---
+
 ## linux安装配置elk日志系统
 
 elk由三大部分组成
