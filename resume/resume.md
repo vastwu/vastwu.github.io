@@ -23,18 +23,25 @@
 * 预编译语言经验（正式项目中实际应用过）
     * html: jade, ejs
     * css: stylu
-    * js: coffeescript（最近逐渐减少coffee的使用，转向es6 / babel）
+    * js: coffeescript，typescript
 * 独立开发过`requirejs`的`cmd`模块加载工具，了解`cmd`和`promise`等规范
 * 独立开发仿`webpack`的构建工具，性能更好（功能简单，特异化适配当前项目）
+* 熟练使用vue全家桶，react + redux；
 * 良好的异步问题解决能力，熟练掌握`generator` + `promise`或`async/await`
 * 能够独立部署`linux`开发环境（lamp / lnmp），熟悉常用的`shell`操作，日常使用`vim`作为开发工具，熟练操作各种命令行场景
 * 有`redis`，`kafka`使用经验（解决缓存，跨部门模块通信）
 * 有`elk`套件的使用经验（解决公司项目的日志检索问题）
-* 有`laravel`开发经验（做过不太复杂的外包项目）
+* 有`laravel`开发经验
 
 ## 工作经验
 ----------
-#### 2015/9 - 至今 一点资讯
+#### 2019/5 - 至今 字节跳动 - 效率工程
+* 飞书（IM）pc端开发工作
+    * 飞书整体架构为 Electron + react + redux，跨平台兼容mac和window
+    * 参与 react 层面的开发工作
+    * 带7人团队负责IM中会话模块的开发和维护，制定开发方案和计划
+
+#### 2015/9 - 2019/5 一点资讯
 * 自媒体相关web前端
     * 自媒体用户发文后台，`vue + koa(node)` 
     * 多个内部工具（权限管理，数据后台等），`vue + elementUI + koa(node)`
@@ -45,8 +52,8 @@
     * 支持人力资源和冲突检测
 * 独立实现前端打点及统计平台
     * 前端打点sdk
-    * 统计接收平台，日志及通过log4js->logstash->elasticsearch
-    * 周期性从elasticsearch跑数据写入数据仓库（mysql）
+    * 统计接收平台，日志清洗，存储 log4js->logstash->elasticsearch
+    * 周期性从elasticsearch 整理中间数据数据写入数据仓库（mysql）
     * 基于数据仓库的可视化平台
 * 统筹安排其他相关项目的人员（7人团队）和排期
 
