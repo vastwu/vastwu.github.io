@@ -45,6 +45,7 @@ function App() {
 ## 上手
 ### 重新定义connect
 首先去查了一下`@types/redux`中关于`connect`的声明，其内部支持的类型比较复杂，也有很多我们用不上的场景，所以需要一种简化的connect类型
+
 ```typescript
 // helps.ts
 import { connect as originConnect } from 'react-redux';
@@ -52,6 +53,7 @@ interface EasyConnect {
 }
 export const connect: EasyConnect = originConnect;
 ```
+
 这样我们的connect用的还是原始实现，但是已经偷偷换掉了类型
 
 ### 支持mapStateToProps的情况
@@ -59,15 +61,18 @@ export const connect: EasyConnect = originConnect;
 1. EasyConnect是个函数，
 2. EasyConnect有一个参数(mapStateToProps)，并且该参数类型是个函数
 3. EasyConnect的参数(mapStateToProps)总是会返回一个对象
-```ts
+
+```typescript
 interface EasyConnect {
   (mapStateToProps: (state: any) => any): any;
 }
 ```
+
 接下来处理返回值的问题
 4. EasyConnect的返回值是个函数（为了方便表达，我们管它叫Connector,并单独写出来）
 5. Connector接受一个React组件
 6. Connector返回一个React组件
+
 ```ts
 interface Connector {
   (component: React.ComponentType): React.ComponentType;
@@ -76,11 +81,14 @@ interface EasyConnect {
   (mapStateToProps: (state: any) => any): Connector;
 }
 ```
+
 接下来就需要引入泛型定义，注意下面泛型声明的位置，是在函数体之前，而不是EasyConnect声明的位置，表示该泛型参数是执行时注入的，而不是在声明时注入
+
 7. 需要有组件自身props约束声明(TOwnProps)
 8. 需要有从全局state分离出来的state声明(TInjectProps)
 9. 需要有全局state声明(TRootState)
-```ts
+
+```typescript
 interface Connector {
   (component: React.ComponentType): React.ComponentType;
 }
@@ -90,9 +98,12 @@ interface EasyConnect {
   ): Connector;
 }
 ```
+
 在此基础上按照connect的实现逐个填入正确的位置
+
 10. `mapStateToProps`接受全局state，并返回映射后注入的props
-```ts
+
+```typescript
 interface Connector {
   (component: React.ComponentType): React.ComponentType;
 }
@@ -102,9 +113,12 @@ interface EasyConnect {
   ): Connector;
 }
 ```
+
 随后加入Connector之后的组件props约束，基于ComponentType的泛型参数
+
 11. 被connect的组件，可以使用的props是OwnProps + 由全局转化来的props
 12. connect之后的组件的props约束是OwnProps 
+
 ```ts
 interface Connector<TInjectProps, TOwnProps> {
   (
@@ -117,8 +131,10 @@ interface EasyConnect {
   ): Connector;
 }
 ```
+
 13. 将Connector的泛型约束传入
-```ts
+
+```typescript
 interface Connector<TInjectProps, TOwnProps> {
   (
     component: React.ComponentType<TInjectProps & TOwnProps>
@@ -130,8 +146,10 @@ interface EasyConnect {
   ): Connector<TInjectProps, TOwnProps>;
 }
 ```
+
 这样大体上就完成了，然后看下如何使用这个类型
-```ts
+
+```typescript
 import { connect } from './helps';
 
 type MapStateProps = { 
@@ -183,7 +201,8 @@ function App() {
 ```
 ### 支持dispatch
 基础思路都差不多，这里就不再逐行分解来写了
-```ts
+
+```typescript
 import { connect as originConnect, DispatchProp } from 'react-redux';
 
 type AnyObject = {[key: string]: any};
@@ -205,7 +224,8 @@ interface EasyConnect {
 ```
 
 实际上，在使用中还会面临一些更复杂的情况，例如页面组件中，是需要传入route的props，例如这样，就需要手动混合OwnProps
-```ts
+
+```typescript
 type MapStateProps = { comments: CommentsState } 
 type MapDispatchProps = ReturnType<typeof mapDispatchToProps>;
 type OwnProps = RouteComponentProps<{ type: 'all' | 'article' }>;
@@ -217,14 +237,17 @@ export default connect<MapStateProps, MapDispatchProps, OwnProps>(
   console.log(props.match.params.type) // all | article
 })
 ```
+
 当然也有一些很简单的场景, 跟不带类型比也没多几行，但同时享受了类型提示
-```ts
+
+```typescript
 export default connect<GlobalRootState['global']>(
   (state) => ({ ...state.global }),
 )(function Layout(props) {
   return ...
 })
 ```
+
 或者有redux-thunk中间件的dispatch, 则不能用redux提供的DispatchProps，需要混入thunk的dispatch函数类型等等
 
 对于ts的类型，万变不离其宗，逐步分写的写，不要着急，特别是一些基础语法，需要不断的练习后就会熟悉起来了
