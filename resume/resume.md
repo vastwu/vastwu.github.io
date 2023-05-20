@@ -26,7 +26,7 @@
     * js: coffeescript，typescript
 * 独立开发过`requirejs`的`cmd`模块加载工具，了解`cmd`和`promise`等规范
 * 独立开发仿`webpack`的构建工具，性能更好（功能简单，特异化适配当前项目）
-* 熟练使用vue全家桶，react + redux；
+* 熟练使用react全家桶；
 * 良好的异步问题解决能力，熟练掌握`generator` + `promise`或`async/await`
 * 能够独立部署`linux`开发环境（lamp / lnmp），熟悉常用的`shell`操作，日常使用`vim`作为开发工具，熟练操作各种命令行场景
 * 有`redis`，`kafka`使用经验（解决缓存，跨业务模块通信）
